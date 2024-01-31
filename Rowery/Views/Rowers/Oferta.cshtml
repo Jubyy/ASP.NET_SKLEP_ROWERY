@@ -1,0 +1,146 @@
+﻿@model IEnumerable<Rowery.Models.Rower>
+@using Microsoft.AspNetCore.Identity
+
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+
+@{
+    ViewData["Title"] = "Oferta";
+}
+
+<h2>Oferta</h2>
+<div style="Flex-wrap: wrap;" class="d-flex p-2 bd-highlight">
+@foreach (var item in Model)
+{
+            var tydzien = item.Price*3*0.95;
+            var miesiac =  item.Price * 13*0.9;
+            
+        
+    
+    
+     
+                <div class="col-sm-4">
+            <div class="card margines_daj">
+                        <img src="@Html.DisplayFor(modelItem => item.url_img)" height="250px"  class="card-img-top" width="100%">
+
+                <div class="card-body pt-0 px-0">
+                            <h3 class="card-title do_srodka">@Html.DisplayFor(modelItem => item.Name)</h3>
+                    <div class="d-flex flex-row justify-content-between mb-0 px-3">
+
+                                <small class="text-muted mt-1">Cena za 2 dni: </small>
+                                <h6>@Html.DisplayFor(modelItem => item.Price) zł</h6>
+                    </div>
+                            <div class="d-flex flex-row justify-content-between mb-0 px-3">
+                                <small class="text-muted mt-1">Cena za 7 dni: </small>
+                                <h6>@tydzien zł</h6>
+                            </div>
+                            <div class="d-flex flex-row justify-content-between mb-0 px-3">
+                                <small class="text-muted mt-1">Cena za 30 dni: </small>
+                                <h6>@miesiac zł</h6>
+                            </div>
+                    <hr class="mt-2 mx-3">
+                    <div class="d-flex flex-row justify-content-between px-3 pb-4">
+                                <div class="d-flex flex-column"><span class="text-muted">Marka: </span><small class="text-muted">@Html.DisplayFor(modelItem => item.brand)</small></div>
+                                <div class="d-flex flex-column"><h5 class="mb-0">Waga:</h5><small class="text-muted text-right">@Html.DisplayFor(modelItem => item.Weight)kg</small></div>
+                        
+                        
+                    </div>
+                    <div class="mx-3 mt-3 mb-2 text-center">
+                    @if (item.ReturnDate != null && item.ReturnDate != DateTime.MinValue && item.IsAvailable == false)
+                    {
+                        <div class="d-flex flex-column">
+                            <h5 class="mb-0">Przedmiot niedostępny!</h5>
+                            <small class="text-muted text-right">Zwrot nastąpi @item.ReturnDate</small>
+                        </div>
+                    }
+                    </div>
+                    @if(User.Identity.IsAuthenticated)
+                    {
+                              
+                    <div class="mx-3 mt-3 mb-2 text-center">
+                        @{
+                            if (item.IsAvailable)
+                            {
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#wybierzOpcjeModal-@item.Id">
+                                    Wypożycz
+                                </button>
+                                
+                            }
+                            else
+                            {
+                                    <a href="#" class="btn btn-danger disabled">Niedostępny</a>
+                                }
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mx-3 mt-3 mb-2 text-center">
+                            @{
+
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="/Account/Login">
+                                    <a class="nav-link text-white" asp-area="Identity" asp-page="/Account/Login">Aby Wypożyczyć zaloguj się!</a>
+                                    </button>
+
+                                
+                            }
+                        </div>
+                    }
+                    
+
+
+                    <!-- Modal -->
+                    <div class="modal fade" id="wybierzOpcjeModal-@item.Id" tabindex="-1" aria-labelledby="wybierzOpcjeModalLabel-@item.Id" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="wybierzOpcjeModalLabel">Wybierz opcje</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label for="exampleFormControlSelect2">Wybierz na ile chcesz wypożyczyć Rower</label>
+                                        <select name="selectedOption" class="form-control" id="exampleFormControlSelect2-@item.Id">
+                                            <option value="" disabled selected>Wybierz opcję</option>
+                                            <option value="2">2 dni - @Html.DisplayFor(modelItem => item.Price) zł</option>
+                                            <option value="7">7 dni - @tydzien zł</option>
+                                            <option value="30">30 dni - @miesiac zł</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <form method="post" action="@Url.Action("ToggleAvailability", "Rowers")">
+                                        @Html.Hidden("id", item.Id)
+                                        <!-- Użyj unikalnego identyfikatora dla ukrytego pola -->
+                                        <input type="hidden" name="selectedOption" id="selectedOptionHidden-@item.Id" />
+                                        <input type="hidden" name="rentDate" value="@DateTime.Now.ToString("dd-MM-yyyy")" />
+                                        <button type="submit" class="btn btn-primary">Wypożycz</button>
+                                    </form>
+                                </div>
+                                <script>
+                                    var selectedOptionValue = 2;
+                                    $(document).ready(function () {
+                                        
+
+                                        // Użyj unikalnego identyfikatora dla elementu select i ukrytego pola
+                                        $('#exampleFormControlSelect2-@item.Id').change(function () {
+                                            selectedOptionValue = $(this).val();
+                                            console.log('Wybrana opcja: ' + selectedOptionValue);
+
+                                            // Ustaw wartość w ukrytym polu formularza
+                                            $('#selectedOptionHidden-@item.Id').val(selectedOptionValue);
+                                        });
+                                    });
+                                </script>
+                            </div>
+                        </div>
+                    </div>
+                        </div>
+                    </div>
+                </div>
+
+          
+        
+
+    }
+</div>
